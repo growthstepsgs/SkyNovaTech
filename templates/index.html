@@ -1,33 +1,61 @@
 {% extends "base.html" %}
 {% block title %}Home - Computer Service Co.{% endblock %}
 {% block content %}
-<section class="hero">
-    <h1>Expert Computer Sales &amp; Service</h1>
-    <p>Repairs, upgrades, custom builds and genuine parts — all in one place.</p>
-    <a href="{{ url_for('ecommerce') }}" class="btn-primary">Browse Products</a>
-</section>
 
-<section class="section">
-    <h2>What We Offer</h2>
-    <div class="card-grid">
-        <div class="card">
-            <h3>Hardware Sales</h3>
-            <p>Laptops, desktops, components and accessories.</p>
+<section class="hero">
+    <div class="hero-inner">
+        <p class="eyebrow">Sales &amp; Repair</p>
+        <h1>Computers, fixed right<br>and sold straight.</h1>
+        <p class="hero-sub">
+            Diagnostics, repairs, upgrades and genuine parts &mdash; handled by
+            technicians who explain what they did and why.
+        </p>
+        <div class="hero-actions">
+            <a href="{{ url_for('ecommerce') }}" class="btn btn-primary btn-lg">Browse products</a>
+            <a href="{{ url_for('community') }}" class="btn btn-outline btn-lg">Ask a question</a>
         </div>
-        <div class="card">
-            <h3>Repair &amp; Service</h3>
-            <p>Fast, reliable diagnostics and repairs.</p>
-        </div>
-        <div class="card">
-            <h3>Community</h3>
-            <p>Ask questions, share tips, connect with other users.</p>
-        </div>
+    </div>
+    <div class="hero-spec" aria-hidden="true">
+        <div class="spec-row"><span class="spec-label">Diagnostics</span><span class="spec-value">Same day</span></div>
+        <div class="spec-row"><span class="spec-label">Parts</span><span class="spec-value">Genuine, in stock</span></div>
+        <div class="spec-row"><span class="spec-label">Support</span><span class="spec-value">Community + direct</span></div>
     </div>
 </section>
 
 <section class="section">
-    <h2>Quick Links</h2>
-    <p><a href="{{ url_for('blog') }}">Read our latest blog posts</a></p>
-    <p><a href="{{ url_for('community') }}">Join the community discussion</a></p>
+    <p class="eyebrow">What we offer</p>
+    <div class="card-grid">
+        <div class="card">
+            <span class="card-tag">01</span>
+            <h3>Hardware sales</h3>
+            <p>Laptops, desktops, components and accessories, priced fairly and in stock.</p>
+        </div>
+        <div class="card">
+            <span class="card-tag">02</span>
+            <h3>Repair &amp; service</h3>
+            <p>Clear diagnostics, honest quotes, and repairs backed by our team.</p>
+        </div>
+        <div class="card">
+            <span class="card-tag">03</span>
+            <h3>Community</h3>
+            <p>Ask questions, share fixes, and get help from other users and our staff.</p>
+        </div>
+    </div>
 </section>
+
+<section class="section section-split">
+    <div>
+        <p class="eyebrow">Read</p>
+        <h2>From the blog</h2>
+        <p>Guides, teardown notes and buying advice from our technicians.</p>
+        <a href="{{ url_for('blog') }}" class="link-arrow">Read the blog</a>
+    </div>
+    <div>
+        <p class="eyebrow">Discuss</p>
+        <h2>Join the community</h2>
+        <p>Post a question or troubleshoot alongside people who've hit the same issue.</p>
+        <a href="{{ url_for('community') }}" class="link-arrow">Go to community</a>
+    </div>
+</section>
+
 {% endblock %}
