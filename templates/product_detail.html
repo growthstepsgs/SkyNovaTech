@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }}{% endblock %}
+{% block content %}
+<section class="section product-detail">
+    <img src="{{ product.image_url or url_for('static', filename='img/placeholder.png') }}" alt="{{ product.name }}">
+    <div class="product-info">
+        <h1>{{ product.name }}</h1>
+        <p class="price">₹{{ product.price }}</p>
+        <p>{{ product.description }}</p>
+        <p>Stock: {{ product.stock }}</p>
+
+        <h3>Send Enquiry / Order Now</h3>
+        <form method="POST" action="{{ url_for('send_enquiry', product_id=product.id) }}">
+            <label>Name</label>
+            <input type="text" name="name" required>
+
+            <label>Email</label>
+            <input type="email" name="email" required>
+
+            <label>Phone</label>
+            <input type="tel" name="phone" required>
+
+            <label>Quantity</label>
+            <input type="number" name="quantity" value="1" min="1">
+
+            <label>Message</label>
+            <textarea name="message" rows="3"></textarea>
+
+            <div class="btn-row">
+                <button type="submit" name="type" value="enquiry" class="btn-secondary">Send Enquiry</button>
+                <button type="submit" name="type" value="order" class="btn-primary">Order Now</button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

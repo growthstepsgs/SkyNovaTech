@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<section class="section">
+    <h1>Admin Dashboard</h1>
+
+    <div class="stats-row">
+        <div class="stat-box"><h3>{{ stats.total_products }}</h3><p>Products</p></div>
+        <div class="stat-box"><h3>{{ stats.new_enquiries }}</h3><p>New Enquiries</p></div>
+        <div class="stat-box"><h3>{{ stats.total_enquiries }}</h3><p>Total Enquiries</p></div>
+    </div>
+
+    <h2>Add Product</h2>
+    <form method="POST" action="{{ url_for('admin_add_product') }}" class="inline-form">
+        <input type="text" name="name" placeholder="Product Name" required>
+        <input type="text" name="category" placeholder="Category">
+        <input type="number" step="0.01" name="price" placeholder="Price" required>
+        <input type="number" name="stock" placeholder="Stock" value="0">
+        <input type="url" name="image_url" placeholder="Image URL">
+        <textarea name="description" placeholder="Description"></textarea>
+        <button type="submit" class="btn-primary">Add Product</button>
+    </form>
+
+    <h2>Manage Products</h2>
+    <table class="admin-table">
+        <tr><th>Name</th><th>Price</th><th>Stock</th><th>Active</th><th>Actions</th></tr>
+        {% for p in products %}
+        <tr>
+            <td>{{ p.name }}</td>
+            <td>₹{{ p.price }}</td>
+            <td>{{ p.stock }}</td>
+            <td>{{ "Yes" if p.is_active else "No" }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('admin_delete_product', product_id=p.id) }}" style="display:inline">
+                    <button type="submit" class="btn-danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>Enquiries / Orders</h2>
+    <table class="admin-table">
+        <tr><th>Type</th><th>Name</th><th>Contact</th><th>Message</th><th>Status</th><th>Action</th></tr>
+        {% for e in enquiries %}
+        <tr>
+            <td>{{ e.type }}</td>
+            <td>{{ e.name }}</td>
+            <td>{{ e.email }}<br>{{ e.phone }}</td>
+            <td>{{ e.message }}</td>
+            <td>{{ e.status }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('admin_respond_enquiry', enquiry_id=e.id) }}">
+                    <select name="status">
+                        <option value="new" {% if e.status=="new" %}selected{% endif %}>New</option>
+                        <option value="contacted" {% if e.status=="contacted" %}selected{% endif %}>Contacted</option>
+                        <option value="closed" {% if e.status=="closed" %}selected{% endif %}>Closed</option>
+                    </select>
+                    <input type="text" name="admin_note" placeholder="Note">
+                    <button type="submit" class="btn-secondary">Update</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>Add Blog Post</h2>
+    <form method="POST" action="{{ url_for('admin_add_blog') }}" class="inline-form">
+        <input type="text" name="title" placeholder="Title" required>
+        <input type="url" name="cover_image" placeholder="Cover Image URL">
+        <textarea name="content" placeholder="Content" required></textarea>
+        <button type="submit" class="btn-primary">Publish</button>
+    </form>
+</section>
+{% endblock %}

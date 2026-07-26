@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Shop{% endblock %}
+{% block content %}
+<section class="section">
+    <h1>Our Products</h1>
+    <div class="product-grid">
+        {% for p in products %}
+        <div class="product-card">
+            <img src="{{ p.image_url or url_for('static', filename='img/placeholder.png') }}" alt="{{ p.name }}">
+            <h3>{{ p.name }}</h3>
+            <p class="price">₹{{ p.price }}</p>
+            <p>{{ p.category }}</p>
+            <a href="{{ url_for('product_detail', product_id=p.id) }}" class="btn-secondary">View Details</a>
+        </div>
+        {% else %}
+        <p>No products available right now.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

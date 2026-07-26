@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Sign Up{% endblock %}
+{% block content %}
+<section class="auth-box">
+    <h2>Create an Account</h2>
+    <form method="POST" action="{{ url_for('signup') }}">
+        <label>Full Name</label>
+        <input type="text" name="full_name" required>
+
+        <label>Email</label>
+        <input type="email" name="email" required>
+
+        <label>Phone</label>
+        <input type="tel" name="phone">
+
+        <label>Password</label>
+        <input type="password" name="password" required minlength="6">
+
+        <button type="submit" class="btn-primary">Sign Up</button>
+    </form>
+    <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+</section>
+{% endblock %}

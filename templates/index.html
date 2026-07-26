@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Home - Computer Service Co.{% endblock %}
+{% block content %}
+<section class="hero">
+    <h1>Expert Computer Sales &amp; Service</h1>
+    <p>Repairs, upgrades, custom builds and genuine parts — all in one place.</p>
+    <a href="{{ url_for('ecommerce') }}" class="btn-primary">Browse Products</a>
+</section>
+
+<section class="section">
+    <h2>What We Offer</h2>
+    <div class="card-grid">
+        <div class="card">
+            <h3>Hardware Sales</h3>
+            <p>Laptops, desktops, components and accessories.</p>
+        </div>
+        <div class="card">
+            <h3>Repair &amp; Service</h3>
+            <p>Fast, reliable diagnostics and repairs.</p>
+        </div>
+        <div class="card">
+            <h3>Community</h3>
+            <p>Ask questions, share tips, connect with other users.</p>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <h2>Quick Links</h2>
+    <p><a href="{{ url_for('blog') }}">Read our latest blog posts</a></p>
+    <p><a href="{{ url_for('community') }}">Join the community discussion</a></p>
+</section>
+{% endblock %}

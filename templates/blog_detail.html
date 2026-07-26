@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }}{% endblock %}
+{% block content %}
+<section class="section">
+    <h1>{{ post.title }}</h1>
+    {% if post.cover_image %}<img src="{{ post.cover_image }}" class="blog-cover" alt="{{ post.title }}">{% endif %}
+    <div class="blog-content">{{ post.content }}</div>
+    <a href="{{ url_for('blog') }}">&larr; Back to Blog</a>
+</section>
+{% endblock %}
