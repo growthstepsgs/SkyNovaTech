@@ -1,27 +1,121 @@
 {% extends "base.html" %}
-{% block title %}Home - Computer Service Co.{% endblock %}
+{% block title %}Home - Sky Nova Tech{% endblock %}
+
 {% block content %}
 
-<section class="hero">
-    <div class="hero-inner">
-        <p class="eyebrow">Sales &amp; Repair</p>
-        <h1>Computers, fixed right<br>and sold straight.</h1>
-        <p class="hero-sub">
-            Diagnostics, repairs, upgrades and genuine parts &mdash; handled by
-            technicians who explain what they did and why.
-        </p>
-        <div class="hero-actions">
-            <a href="{{ url_for('ecommerce') }}" class="btn btn-primary btn-lg">Browse products</a>
-            <a href="{{ url_for('community') }}" class="btn btn-outline btn-lg">Ask a question</a>
+<!-- ===== FULL-WIDTH HERO ===== -->
+<section class="hero-dark">
+    <div class="hero-dark-glow" aria-hidden="true"></div>
+
+    <div class="hero-dark-inner">
+        <div class="hero-dark-text">
+            <p class="eyebrow">Sales &amp; Repair</p>
+            <h1>Computers, fixed right<br>and sold straight.</h1>
+            <p class="hero-sub">
+                Diagnostics, repairs, upgrades and genuine parts — handled by
+                technicians who explain what they did and why.
+            </p>
+            <div class="hero-actions">
+                <a href="{{ url_for('ecommerce') }}" class="btn btn-glow">Browse products</a>
+                <a href="{{ url_for('community') }}" class="btn btn-outline-light">Ask a question</a>
+            </div>
         </div>
-    </div>
-    <div class="hero-spec" aria-hidden="true">
-        <div class="spec-row"><span class="spec-label">Diagnostics</span><span class="spec-value">Same day</span></div>
-        <div class="spec-row"><span class="spec-label">Parts</span><span class="spec-value">Genuine, in stock</span></div>
-        <div class="spec-row"><span class="spec-label">Support</span><span class="spec-value">Community + direct</span></div>
+
+        <div class="hero-right">
+            <img id="heroImg"
+                 
+                 alt="Sky Nova Tech"
+                 style="display:none;">
+            <div id="heroSpec" class="hero-spec-dark">
+                <div class="spec-row">
+                    <span class="spec-label">Diagnostics</span>
+                    <span class="spec-value">Same day</span>
+                </div>
+                <div class="spec-row">
+                    <span class="spec-label">Parts</span>
+                    <span class="spec-value">Genuine, in stock</span>
+                </div>
+                <div class="spec-row">
+                    <span class="spec-label">Support</span>
+                    <span class="spec-value">Community + direct</span>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
+<!-- ===== FEATURED PRODUCTS ===== -->
+<section class="section featured-section">
+    <div class="featured-header">
+        <div>
+            
+            <h2>Featured Products</h2>
+        </div>
+        <a href="{{ url_for('ecommerce') }}" class="btn btn-outline">Explore more →</a>
+    </div>
+
+    <div class="featured-grid">
+        {% for p in featured_products %}
+        <div class="featured-card">
+            <div class="featured-img">
+                <img src="{{ p.image_url or '' }}"
+                     alt="{{ p.name }}"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <span class="img-placeholder" style="display:none;">No Image</span>
+            </div>
+            <div class="featured-body">
+                <h3>{{ p.name }}</h3>
+                <p class="featured-price">₹{{ "%.0f"|format(p.price) }}</p>
+                <a href="{{ url_for('product_detail', product_id=p.id) }}" class="btn btn-sm btn-primary">View Details</a>
+            </div>
+        </div>
+        {% else %}
+        <!-- Fallback when DB is empty -->
+        <div class="featured-card">
+            <div class="featured-img">
+                <span class="img-placeholder">Add Image</span>
+            </div>
+            <div class="featured-body">
+                <h3>Gaming Laptop Pro</h3>
+                <p class="featured-price">₹74,999</p>
+                <a href="{{ url_for('ecommerce') }}" class="btn btn-sm btn-primary">View Details</a>
+            </div>
+        </div>
+        <div class="featured-card">
+            <div class="featured-img">
+                <span class="img-placeholder">Add Image</span>
+            </div>
+            <div class="featured-body">
+                <h3>NVMe SSD 1TB</h3>
+                <p class="featured-price">₹8,499</p>
+                <a href="{{ url_for('ecommerce') }}" class="btn btn-sm btn-primary">View Details</a>
+            </div>
+        </div>
+        <div class="featured-card">
+            <div class="featured-img">
+                <span class="img-placeholder">Add Image</span>
+            </div>
+            <div class="featured-body">
+                <h3>DDR5 RAM 32GB</h3>
+                <p class="featured-price">₹12,999</p>
+                <a href="{{ url_for('ecommerce') }}" class="btn btn-sm btn-primary">View Details</a>
+            </div>
+        </div>
+        <div class="featured-card">
+            <div class="featured-img">
+                <span class="img-placeholder">Add Image</span>
+            </div>
+            <div class="featured-body">
+                <h3>27" 165Hz Monitor</h3>
+                <p class="featured-price">₹24,499</p>
+                <a href="{{ url_for('ecommerce') }}" class="btn btn-sm btn-primary">View Details</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- ===== WHAT WE OFFER ===== -->
 <section class="section">
     <p class="eyebrow">What we offer</p>
     <div class="card-grid">
@@ -43,19 +137,38 @@
     </div>
 </section>
 
+<!-- ===== BLOG & COMMUNITY ===== -->
 <section class="section section-split">
     <div>
         <p class="eyebrow">Read</p>
         <h2>From the blog</h2>
         <p>Guides, teardown notes and buying advice from our technicians.</p>
-        <a href="{{ url_for('blog') }}" class="link-arrow">Read the blog</a>
+        <a href="{{ url_for('blog') }}" class="link-arrow">Read the blog →</a>
     </div>
     <div>
         <p class="eyebrow">Discuss</p>
         <h2>Join the community</h2>
         <p>Post a question or troubleshoot alongside people who've hit the same issue.</p>
-        <a href="{{ url_for('community') }}" class="link-arrow">Go to community</a>
+        <a href="{{ url_for('community') }}" class="link-arrow">Go to community →</a>
     </div>
 </section>
+
+<script>
+(function() {
+    const img = document.getElementById('heroImg');
+    const spec = document.getElementById('heroSpec');
+    if (!img || !spec) return;
+
+    function showImage() { img.style.display = 'block'; spec.style.display = 'none'; }
+    function showSpec()  { img.style.display = 'none';  spec.style.display = 'block'; }
+
+    img.onload = showImage;
+    img.onerror = showSpec;
+
+    if (img.complete) {
+        img.naturalWidth > 0 ? showImage() : showSpec();
+    }
+})();
+</script>
 
 {% endblock %}

@@ -1,20 +1,75 @@
 {% extends "base.html" %}
-{% block title %}Shop{% endblock %}
+{% block title %}Shop — Sky Nova Tech{% endblock %}
+
 {% block content %}
-<section class="section">
+
+<!-- ===== SEARCH BAR ===== -->
+<section class="section" style="padding-bottom: 1rem;">
+    <p class="eyebrow">Store</p>
     <h1>Our Products</h1>
-    <div class="product-grid">
-        {% for p in products %}
-        <div class="product-card">
-            <img src="{{ p.image_url or url_for('static', filename='img/placeholder.png') }}" alt="{{ p.name }}">
-            <h3>{{ p.name }}</h3>
-            <p class="price">₹{{ p.price }}</p>
-            <p>{{ p.category }}</p>
-            <a href="{{ url_for('product_detail', product_id=p.id) }}" class="btn-secondary">View Details</a>
+
+    <form method="GET" action="{{ url_for('ecommerce') }}" class="shop-search">
+        <div class="search-box">
+            <input
+                type="text"
+                name="q"
+                value="{{ query }}"
+                placeholder="Search laptops, SSDs, monitors…"
+                autocomplete="off"
+            >
+            <button type="submit" class="search-btn" aria-label="Search">🔍</button>
         </div>
+        {% if query %}
+        <a href="{{ url_for('ecommerce') }}" class="btn btn-ghost btn-sm">✕ Clear search</a>
+        {% endif %}
+    </form>
+
+    <p class="results-count">
+        {% if products %}
+            Showing <strong>{{ products|length }}</strong> product{% if products|length != 1 %}s{% endif %}
+            {% if query %} for "<strong>{{ query }}</strong>"{% endif %}
         {% else %}
-        <p>No products available right now.</p>
+            {% if query %}No products match "<strong>{{ query }}</strong>"{% else %}No products available yet.{% endif %}
+        {% endif %}
+    </p>
+</section>
+
+<!-- ===== PRODUCT GRID ===== -->
+<section class="section" style="padding-top: 0;">
+    {% if products %}
+    <div class="shop-grid">
+        {% for p in products %}
+        <div class="shop-card">
+            <div class="shop-img">
+                {% if p.image_url %}
+                    <img src="{{ p.image_url }}"
+                         alt="{{ p.name }}"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <span class="img-placeholder" style="display:none;">No Image</span>
+                {% else %}
+                    <span class="img-placeholder">No Image</span>
+                {% endif %}
+            </div>
+            <div class="shop-body">
+                {% if p.category %}
+                <span class="shop-tag">{{ p.category }}</span>
+                {% endif %}
+                <h3>{{ p.name }}</h3>
+                <p class="shop-price">₹{{ "%.0f"|format(p.price) }}</p>
+                <a href="{{ url_for('product_detail', product_id=p.id) }}" class="btn btn-sm btn-primary">View Details</a>
+            </div>
+        </div>
         {% endfor %}
     </div>
+    {% else %}
+    <div class="empty-shop">
+        <p style="font-size: 1.2rem; margin-bottom: 0.5rem;">🛒</p>
+        <p>No products found.</p>
+        {% if query %}
+        <a href="{{ url_for('ecommerce') }}" class="link-arrow">View all products</a>
+        {% endif %}
+    </div>
+    {% endif %}
 </section>
+
 {% endblock %}

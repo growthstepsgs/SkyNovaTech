@@ -1,36 +1,73 @@
 {% extends "base.html" %}
-{% block title %}{{ product.name }}{% endblock %}
+{% block title %}{{ product.name }} — Sky Nova Tech{% endblock %}
+
 {% block content %}
-<section class="section product-detail">
-    <img src="{{ product.image_url or url_for('static', filename='img/placeholder.png') }}" alt="{{ product.name }}">
-    <div class="product-info">
-        <h1>{{ product.name }}</h1>
-        <p class="price">₹{{ product.price }}</p>
-        <p>{{ product.description }}</p>
-        <p>Stock: {{ product.stock }}</p>
 
-        <h3>Send Enquiry / Order Now</h3>
-        <form method="POST" action="{{ url_for('send_enquiry', product_id=product.id) }}">
-            <label>Name</label>
-            <input type="text" name="name" required>
+<!-- ===== PRODUCT HERO ===== -->
+<section class="section product-detail-section">
+    <div class="product-detail-grid">
+        <!-- Image -->
+        <div class="product-image-wrap">
+            <img src="{{ product.image_url or url_for('static', filename='img/placeholder.png') }}"
+                 alt="{{ product.name }}"
+                 onerror="this.src='{{ url_for('static', filename='img/placeholder.png') }}'">
+        </div>
 
-            <label>Email</label>
-            <input type="email" name="email" required>
+        <!-- Info -->
+        <div class="product-info-card">
+            {% if product.category %}
+            <span class="product-category">{{ product.category }}</span>
+            {% endif %}
+            
+            <h1>{{ product.name }}</h1>
+            
+            <p class="product-price">₹{{ "%.0f"|format(product.price) }}</p>
+            
+            {% if product.stock > 0 %}
+            <p class="stock-badge in-stock">✓ In stock — {{ product.stock }} units</p>
+            {% else %}
+            <p class="stock-badge out-stock">✗ Out of stock</p>
+            {% endif %}
 
-            <label>Phone</label>
-            <input type="tel" name="phone" required>
-
-            <label>Quantity</label>
-            <input type="number" name="quantity" value="1" min="1">
-
-            <label>Message</label>
-            <textarea name="message" rows="3"></textarea>
-
-            <div class="btn-row">
-                <button type="submit" name="type" value="enquiry" class="btn-secondary">Send Enquiry</button>
-                <button type="submit" name="type" value="order" class="btn-primary">Order Now</button>
+            <div class="product-desc">
+                <p>{{ product.description or 'No description available.' }}</p>
             </div>
-        </form>
+
+            <!-- Enquiry Form -->
+            <div class="enquiry-box">
+                <h3>Send Enquiry</h3>
+                <form method="POST" action="{{ url_for('send_enquiry', product_id=product.id) }}">
+                    <div class="enquiry-grid">
+                        <div class="form-group">
+                            <label>Your Name</label>
+                            <input type="text" name="name" placeholder="John Doe" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" name="email" placeholder="john@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="tel" name="phone" placeholder="+91 98765 43210" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Quantity</label>
+                            <input type="number" name="quantity" value="1" min="1" max="{{ product.stock or 99 }}">
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label>Message <small>(optional)</small></label>
+                            <textarea name="message" rows="3" placeholder="Any specific requirements..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="enquiry-actions">
+                        <button type="submit" name="type" value="enquiry" class="btn btn-outline">📨 Send Enquiry</button>
+                        <button type="submit" name="type" value="order" class="btn btn-primary">🛒 Order Now</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </section>
+
 {% endblock %}

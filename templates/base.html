@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark-blue">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% block title %}Computer Service Co.{% endblock %}</title>
+<title>{% block title %}Sky Nova Tech{% endblock %}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
@@ -23,11 +23,15 @@
 
             <nav class="nav-links" id="navLinks">
                 <a href="{{ url_for('index') }}">Home</a>
+                <a href="{{ url_for('about') }}">About</a>
                 <a href="{{ url_for('ecommerce') }}">Shop</a>
                 <a href="{{ url_for('blog') }}">Blog</a>
                 <a href="{{ url_for('community') }}">Community</a>
+                <a href="{{ url_for('contact') }}">Contact</a>
 
                 <div class="nav-divider" aria-hidden="true"></div>
+
+                <button class="btn btn-ghost theme-toggle" id="themeToggle" aria-label="Switch theme">◐</button>
 
                 {% if user %}
                     {% if session.get('is_admin') %}
@@ -63,13 +67,14 @@
     <footer class="footer">
         <div class="footer-inner">
             <div class="footer-brand">
-                <span class="brand-mark">CS</span>
-                <span class="brand-name">CompService</span>
+                <span class="brand-mark">SNT</span>
+                <span class="brand-name">Sky Nova Tech</span>
             </div>
             <nav class="footer-links">
                 <a href="{{ url_for('ecommerce') }}">Shop</a>
                 <a href="{{ url_for('blog') }}">Blog</a>
                 <a href="{{ url_for('community') }}">Community</a>
+                <a href="{{ url_for('contact') }}">Contact</a>
             </nav>
             <p class="footer-copy">&copy; 2026 Sky Nova Technologies.</p>
         </div>

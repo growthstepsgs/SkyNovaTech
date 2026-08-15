@@ -23,3 +23,37 @@ document.querySelectorAll(".flash").forEach((flash) => {
         setTimeout(() => flash.remove(), 300);
     }, 5000);
 });
+
+// =========================================================
+// THEME TOGGLE
+// =========================================================
+const themeToggle = document.getElementById("themeToggle");
+const html = document.documentElement;
+
+function setTheme(theme) {
+    html.setAttribute("data-theme", theme);
+    localStorage.setItem("snt-theme", theme);
+    updateThemeIcon(theme);
+}
+
+function updateThemeIcon(theme) {
+    if (!themeToggle) return;
+    if (theme === "dark-blue") {
+        themeToggle.textContent = "🌙";  // moon = click to go darker
+        themeToggle.title = "Switch to black theme";
+    } else {
+        themeToggle.textContent = "☀️";  // blue dot = click to go blue
+        themeToggle.title = "Switch to dark blue theme";
+    }
+}
+
+// Init on load
+const savedTheme = localStorage.getItem("snt-theme") || "dark-blue";
+setTheme(savedTheme);
+
+if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+        const current = html.getAttribute("data-theme");
+        setTheme(current === "dark-blue" ? "dark" : "dark-blue");
+    });
+}
