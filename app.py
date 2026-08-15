@@ -19,6 +19,8 @@ from flask import (
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
+from werkzeug.utils import secure_filename
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -33,8 +35,17 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 # Admin client (service role) - used ONLY for admin dashboard operations
 supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+if os.environ.get("VERCEL"):
+    UPLOAD_FOLDER = "/tmp/uploads"
+else:
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "img", "products")
+# Add this near the top of app.py, after imports
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "img", "products")
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 # ---------------------------------------------------------------------------
 # Helpers / decorators
 # ---------------------------------------------------------------------------
@@ -62,18 +73,72 @@ def admin_required(f):
 # ---------------------------------------------------------------------------
 # Public pages
 # ---------------------------------------------------------------------------
-
 @app.route("/")
 def index():
-    return render_template("index.html", user=session.get("user_name"))
+    try:
+        featured = (
+            supabase.table("products")
+            .select("*")
+            .eq("is_active", True)
+            .limit(4)
+            .execute()
+        )
+        featured_data = featured.data
+    except Exception:
+        featured_data = []
 
+    return render_template(
+        "index.html",
+        user=session.get("user_name"),
+        featured_products=featured_data,
+    )
+@app.route("/contact", methods=["GET", "POST"])
+def contact():
+    if request.method == "POST":
+        name = request.form.get("name")
+        email = request.form.get("email")
+        phone = request.form.get("phone")
+        message = request.form.get("message")
+
+        try:
+            supabase_admin.table("enquiries").insert({
+                "product_id": None,
+                "user_id": session.get("user_id"),
+                "name": name,
+                "email": email,
+                "phone": phone,
+                "message": message,
+                "quantity": 1,
+                "type": "enquiry",
+                "status": "new",
+            }).execute()
+            flash("Message sent! We'll get back to you soon.", "success")
+            return redirect(url_for("contact"))
+        except Exception as e:
+            flash(f"Something went wrong: {str(e)}", "danger")
+
+    return render_template("contact.html", user=session.get("user_name"))
+
+@app.route("/about")
+def about():
+    return render_template("about.html", user=session.get("user_name"))
 
 @app.route("/ecommerce")
 def ecommerce():
-    """Public product listing - anyone can view, no login needed to browse."""
-    products = supabase.table("products").select("*").eq("is_active", True).execute()
-    return render_template("ecommerce.html", products=products.data, user=session.get("user_name"))
-
+    """Public product listing with search."""
+    search = request.args.get("q", "").strip()
+    query = supabase.table("products").select("*").eq("is_active", True)
+    
+    if search:
+        query = query.ilike("name", f"%{search}%")
+    
+    products = query.execute()
+    return render_template(
+        "ecommerce.html",
+        products=products.data,
+        query=search,
+        user=session.get("user_name")
+    )
 
 @app.route("/product/<product_id>")
 def product_detail(product_id):
@@ -237,16 +302,29 @@ def admin_dashboard():
     return render_template("admin_dashboard.html", products=products.data,
                             enquiries=enquiries.data, stats=stats, user=session.get("user_name"))
 
-
 @app.route("/admin/product/add", methods=["POST"])
 @admin_required
 def admin_add_product():
+    image_url = request.form.get("image_url", "").strip()
+    
+    # Handle file upload
+    if "image_file" in request.files:
+        file = request.files["image_file"]
+        if file and file.filename and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            # Prefix with timestamp to avoid collisions
+            filename = f"{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{filename}"
+            filepath = os.path.join(UPLOAD_FOLDER, filename)
+            file.save(filepath)
+            # Store the static URL
+            image_url = url_for("static", filename=f"img/products/{filename}")
+
     supabase_admin.table("products").insert({
         "name": request.form.get("name"),
         "description": request.form.get("description"),
         "price": request.form.get("price"),
         "category": request.form.get("category"),
-        "image_url": request.form.get("image_url"),
+        "image_url": image_url or None,
         "stock": request.form.get("stock", 0),
         "is_active": True,
     }).execute()
