@@ -153,7 +153,7 @@ def blog_detail(post_id):
 @app.route("/community")
 @login_required
 def community():
-    posts = (supabase.table("community_posts").select("*, profiles(full_name)")
+    posts = (supabase_admin.table("community_posts").select("*, profiles(full_name)")
              .order("created_at", desc=True).execute())
     return render_template("community.html", posts=posts.data, user=session.get("user_name"))
 
@@ -161,7 +161,7 @@ def community():
 @app.route("/community/new", methods=["POST"])
 @login_required
 def community_new():
-    supabase.table("community_posts").insert({
+    supabase_admin.table("community_posts").insert({
         "title": request.form.get("title"),
         "content": request.form.get("content"),
         "user_id": session["user_id"],
@@ -179,26 +179,43 @@ def signup():
     if request.method == "GET":
         return render_template("signup.html")
 
-    full_name = request.form.get("full_name")
-    email = request.form.get("email")
-    password = request.form.get("password")
-    phone = request.form.get("phone")
+    full_name = (request.form.get("full_name") or "").strip()
+    email = (request.form.get("email") or "").strip().lower()
+    password = request.form.get("password") or ""
+    phone = (request.form.get("phone") or "").strip()
+
+    if len(password) < 6:
+        flash("Password must be at least 6 characters.", "danger")
+        return render_template("signup.html")
 
     try:
-        auth_response = supabase.auth.sign_up({"email": email, "password": password})
-        new_user = auth_response.user
-        if new_user:
-            supabase_admin.table("profiles").insert({
-                "id": new_user.id,
-                "full_name": full_name,
-                "email": email,
-                "phone": phone,
-                "role": "customer",
-            }).execute()
-            flash("Account created! Please log in.", "success")
-            return redirect(url_for("login"))
+        # Admin API: creates an already-confirmed user, so no confirmation
+        # email is needed and Supabase's email rate limit can't block signup.
+        result = supabase_admin.auth.admin.create_user({
+            "email": email,
+            "password": password,
+            "email_confirm": True,
+            "user_metadata": {"full_name": full_name},
+        })
+        new_user = result.user
+
+        # A DB trigger may already have created the profile row, so upsert.
+        supabase_admin.table("profiles").upsert({
+            "id": new_user.id,
+            "full_name": full_name,
+            "email": email,
+            "phone": phone,
+            "role": "customer",
+        }).execute()
+
+        flash("Account created! Please log in.", "success")
+        return redirect(url_for("login"))
     except Exception as e:
-        flash(f"Signup failed: {str(e)}", "danger")
+        msg = str(e)
+        if "already" in msg.lower() or "registered" in msg.lower():
+            flash("An account with this email already exists. Try logging in.", "danger")
+        else:
+            flash(f"Signup failed: {msg}", "danger")
 
     return render_template("signup.html")
 
@@ -208,24 +225,44 @@ def login():
     if request.method == "GET":
         return render_template("login.html")
 
-    email = request.form.get("email")
-    password = request.form.get("password")
+    email = (request.form.get("email") or "").strip().lower()
+    password = request.form.get("password") or ""
 
     try:
-        auth_response = supabase.auth.sign_in_with_password({"email": email, "password": password})
+        # Fresh client per login. Signing in on the shared global client would
+        # leak one user's session into every other request.
+        auth_client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+        auth_response = auth_client.auth.sign_in_with_password({
+            "email": email,
+            "password": password,
+        })
         user = auth_response.user
-        profile = supabase.table("profiles").select("*").eq("id", user.id).single().execute()
+
+        # Server-side profile lookup with the service key
+        result = supabase_admin.table("profiles").select("*").eq("id", user.id).execute()
+        if result.data:
+            profile = result.data[0]
+        else:
+            profile = {"full_name": email.split("@")[0], "role": "customer"}
+            supabase_admin.table("profiles").upsert({
+                "id": user.id, "email": email,
+                "full_name": profile["full_name"], "role": "customer",
+            }).execute()
 
         session["user_id"] = user.id
-        session["user_name"] = profile.data.get("full_name")
-        session["is_admin"] = profile.data.get("role") == "admin"
+        session["user_name"] = profile.get("full_name")
+        session["is_admin"] = profile.get("role") == "admin"
 
         flash("Logged in successfully!", "success")
         if session["is_admin"]:
             return redirect(url_for("admin_dashboard"))
         return redirect(url_for("index"))
-    except Exception:
-        flash("Invalid email or password.", "danger")
+
+    except Exception as e:
+        if "not confirmed" in str(e).lower():
+            flash("Please confirm your email first, or ask the admin to confirm it.", "warning")
+        else:
+            flash("Invalid email or password.", "danger")
         return render_template("login.html")
 
 
