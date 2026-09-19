@@ -13,9 +13,8 @@
 <body>
     <header class="navbar">
         <div class="navbar-inner">
-            <a href="{{ url_for('index') }}" class="brand">
-                <span class="brand-mark">SNT</span>
-                <span class="brand-name">Sky Nova Tech</span>
+            <a href="{{ url_for('index') }}" class="brand" aria-label="Sky Nova Technology home">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Sky Nova Technology" class="brand-logo" width="1208" height="333">
             </a>
 
             <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
