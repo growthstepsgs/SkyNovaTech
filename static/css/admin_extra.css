@@ -1,0 +1,32 @@
+/* ===== Paste at the bottom of static/css/style.css ===== */
+.admin-subnav,
+.filter-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem;
+    border-bottom: 1px solid rgba(128, 128, 128, .3);
+    margin-bottom: 1rem;
+}
+.filter-tabs { margin-top: .75rem; }
+.admin-subnav a,
+.filter-tabs a {
+    padding: .6rem 1rem;
+    text-decoration: none;
+    color: inherit;
+    opacity: .7;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+.admin-subnav a:hover,
+.filter-tabs a:hover { opacity: 1; }
+.admin-subnav a.active,
+.filter-tabs a.active {
+    opacity: 1;
+    font-weight: 600;
+    border-bottom-color: currentColor;
+}
+.row-actions { white-space: nowrap; }
+.row-actions .btn + form,
+.row-actions form + form { margin-left: .25rem; }
+.inline-edit { margin-top: .75rem; display: grid; gap: .75rem; max-width: 560px; }
+details summary { cursor: pointer; }
