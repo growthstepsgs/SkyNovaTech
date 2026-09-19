@@ -35,17 +35,24 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 # Admin client (service role) - used ONLY for admin dashboard operations
 supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-if os.environ.get("VERCEL"):
-    UPLOAD_FOLDER = "/tmp/uploads"
-else:
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "img", "products")
-# Add this near the top of app.py, after imports
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "img", "products")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+STORAGE_BUCKET = "product-images"
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def upload_product_image(file):
+    """Uploads a file to Supabase Storage and returns its public URL."""
+    filename = secure_filename(file.filename)
+    filename = f"{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{filename}"
+    file_bytes = file.read()
+
+    supabase_admin.storage.from_(STORAGE_BUCKET).upload(
+        path=filename,
+        file=file_bytes,
+        file_options={"content-type": file.mimetype, "upsert": "true"},
+    )
+    return supabase_admin.storage.from_(STORAGE_BUCKET).get_public_url(filename)
 # ---------------------------------------------------------------------------
 # Helpers / decorators
 # ---------------------------------------------------------------------------
@@ -306,18 +313,14 @@ def admin_dashboard():
 @admin_required
 def admin_add_product():
     image_url = request.form.get("image_url", "").strip()
-    
-    # Handle file upload
-    if "image_file" in request.files:
-        file = request.files["image_file"]
-        if file and file.filename and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            # Prefix with timestamp to avoid collisions
-            filename = f"{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{filename}"
-            filepath = os.path.join(UPLOAD_FOLDER, filename)
-            file.save(filepath)
-            # Store the static URL
-            image_url = url_for("static", filename=f"img/products/{filename}")
+
+    file = request.files.get("image_file")
+    if file and file.filename and allowed_file(file.filename):
+        try:
+            image_url = upload_product_image(file)
+        except Exception as e:
+            flash(f"Image upload failed: {e}", "danger")
+            return redirect(url_for("admin_dashboard"))
 
     supabase_admin.table("products").insert({
         "name": request.form.get("name"),
