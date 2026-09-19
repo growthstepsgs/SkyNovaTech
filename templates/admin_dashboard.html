@@ -1,228 +1,46 @@
-{% extends "base.html" %}
-{% block title %}Admin Dashboard — Sky Nova Tech{% endblock %}
+{% extends "admin_base.html" %}
+{% block title %}Admin Overview — Sky Nova Tech{% endblock %}
 
-{% block content %}
-
-<!-- ===== TOP STATS ===== -->
+{% block admin_content %}
 <section class="section" style="padding-top: 1.5rem;">
     <div class="stats-row">
-        <div class="stat-box">
-            <h3>{{ stats.total_products }}</h3>
-            <p>Products</p>
-        </div>
-        <div class="stat-box">
-            <h3>{{ stats.new_enquiries }}</h3>
-            <p>New Enquiries</p>
-        </div>
-        <div class="stat-box">
-            <h3>{{ stats.total_enquiries }}</h3>
-            <p>Total Enquiries</p>
-        </div>
-        <a href="{{ url_for('admin_dashboard') }}" class="stat-box stat-link">
-            <h3>⌘</h3>
-            <p>Dashboard</p>
+        <a href="{{ url_for('admin_products') }}" class="stat-box stat-link">
+            <h3>{{ stats.total_products }}</h3><p>Products</p>
+        </a>
+        <a href="{{ url_for('admin_enquiries', status='new') }}" class="stat-box stat-link">
+            <h3>{{ stats.new_enquiries }}</h3><p>New enquiries</p>
+        </a>
+        <a href="{{ url_for('admin_blogs') }}" class="stat-box stat-link">
+            <h3>{{ stats.total_blogs }}</h3><p>Blog posts</p>
+        </a>
+        <a href="{{ url_for('admin_community') }}" class="stat-box stat-link">
+            <h3>{{ stats.total_posts }}</h3><p>Community posts</p>
         </a>
     </div>
 </section>
 
-<!-- ===== ADD PRODUCT ===== -->
-<!-- ===== ADD PRODUCT ===== -->
 <section class="section">
-    <p class="eyebrow">Inventory</p>
-    <h2>Add Product</h2>
-
-    <form action="{{ url_for('admin_add_product') }}" method="POST" class="admin-card" enctype="multipart/form-data">
-        <div class="admin-form-grid">
-            <div class="form-group">
-                <label>Product Name</label>
-                <input type="text" name="name" placeholder="e.g. Gaming Laptop Pro" required>
-            </div>
-
-            <div class="form-group">
-                <label>Category</label>
-                <input type="text" name="category" placeholder="e.g. Laptop, SSD, RAM">
-            </div>
-
-            <div class="form-group">
-                <label>Price (₹)</label>
-                <input type="number" name="price" step="0.01" placeholder="0.00" required>
-            </div>
-
-            <div class="form-group">
-                <label>Stock Quantity</label>
-                <input type="number" name="stock" value="0" min="0">
-            </div>
-
-            <div class="form-group" style="grid-column: 1 / -1;">
-                <label>Upload Image</label>
-                <input type="file" name="image_file" accept="image/png, image/jpeg, image/jpg, image/webp, image/gif">
-                <small>Choose a file from your computer. PNG, JPG, WEBP, GIF accepted.</small>
-            </div>
-
-            <div class="form-group" style="grid-column: 1 / -1;">
-                <label>Or paste Image URL</label>
-                <input type="url" name="image_url" placeholder="https://example.com/image.jpg">
-                <small>Only use this if you have a direct image link (not Google Drive).</small>
-            </div>
-
-            <div class="form-group" style="grid-column: 1 / -1;">
-                <label>Description</label>
-                <textarea name="description" rows="3" placeholder="Short product description..."></textarea>
-            </div>
-        </div>
-
-        <div class="admin-form-actions">
-            <button type="submit" class="btn btn-primary">➕ Add Product</button>
-            <button type="reset" class="btn btn-ghost">Clear</button>
-        </div>
-    </form>
-</section>
-
-<!-- ===== PRODUCTS TABLE ===== -->
-<section class="section">
-    <p class="eyebrow">Catalog</p>
-    <h2>Manage Products</h2>
-
+    <h2>Latest enquiries</h2>
     <div class="table-wrap">
         <table class="admin-table">
             <thead>
-                <tr>
-                    <th style="width:60px">Image</th>
-                    <th>Product</th>
-                    <th>Category</th>
-                    <th>Price</th>
-                    <th>Stock</th>
-                    <th>Status</th>
-                    <th style="width:120px">Actions</th>
-                </tr>
+                <tr><th>Date</th><th>Type</th><th>Customer</th><th>Message</th><th>Status</th></tr>
             </thead>
             <tbody>
-                {% for p in products %}
-                <tr>
-                    <td>
-                        {% if p.image_url %}
-                        <img src="{{ p.image_url }}" alt="" class="table-thumb">
-                        {% else %}
-                        <div class="table-thumb placeholder-thumb">—</div>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <strong>{{ p.name }}</strong>
-                        {% if p.description %}
-                        <br><small class="muted">{{ p.description[:50] }}{% if p.description|length > 50 %}…{% endif %}</small>
-                        {% endif %}
-                    </td>
-                    <td><span class="badge">{{ p.category or '—' }}</span></td>
-                    <td>₹{{ "%.0f"|format(p.price) }}</td>
-                    <td>{{ p.stock }}</td>
-                    <td>
-                        {% if p.is_active %}
-                        <span class="status-dot active"></span> Active
-                        {% else %}
-                        <span class="status-dot inactive"></span> Draft
-                        {% endif %}
-                    </td>
-                    <td>
-                        <form action="{{ url_for('admin_delete_product', product_id=p.id) }}" method="POST" style="display:inline" onsubmit="return confirm('Delete {{ p.name }}?');">
-                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="7" class="empty-cell">No products yet. Add one above ↑</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</section>
-
-<!-- ===== ENQUIRIES ===== -->
-<section class="section">
-    <p class="eyebrow">Inbox</p>
-    <h2>Enquiries & Orders</h2>
-
-    <div class="table-wrap">
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Customer</th>
-                    <th>Contact</th>
-                    <th>Message</th>
-                    <th>Status</th>
-                    <th>Note</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for e in enquiries %}
+                {% for e in recent_enquiries %}
                 <tr>
                     <td class="mono">{{ e.created_at[:10] if e.created_at else '—' }}</td>
-                    <td>
-                        <span class="badge type-{{ e.type }}">{{ e.type }}</span>
-                    </td>
+                    <td><span class="badge type-{{ e.type }}">{{ e.type }}</span></td>
                     <td><strong>{{ e.name or '—' }}</strong></td>
-                    <td class="mono-small">
-                        {{ e.email or '—' }}<br>
-                        {{ e.phone or '—' }}
-                    </td>
-                    <td>
-                        <small class="muted">{{ e.message or '—' }}</small>
-                    </td>
-                    <td>
-                        <form action="{{ url_for('admin_respond_enquiry', enquiry_id=e.id) }}" method="POST">
-                            <select name="status" class="status-select" onchange="this.form.submit()">
-                                <option value="new" {% if e.status=='new' %}selected{% endif %}>🟡 New</option>
-                                <option value="contacted" {% if e.status=='contacted' %}selected{% endif %}>🔵 Contacted</option>
-                                <option value="closed" {% if e.status=='closed' %}selected{% endif %}>🟢 Closed</option>
-                            </select>
-                        </form>
-                    </td>
-                    <td>
-                        <form action="{{ url_for('admin_respond_enquiry', enquiry_id=e.id) }}" method="POST" class="note-form">
-                            <input type="text" name="admin_note" value="{{ e.admin_note or '' }}" placeholder="Add note…">
-                        </form>
-                    </td>
+                    <td><small class="muted">{{ (e.message or '—')[:80] }}</small></td>
+                    <td>{{ e.status }}</td>
                 </tr>
                 {% else %}
-                <tr>
-                    <td colspan="7" class="empty-cell">No enquiries yet.</td>
-                </tr>
+                <tr><td colspan="5" class="empty-cell">No enquiries yet.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+    <p style="margin-top: 1rem;"><a href="{{ url_for('admin_enquiries') }}" class="btn btn-ghost">View all enquiries</a></p>
 </section>
-
-<!-- ===== BLOG POST ===== -->
-<section class="section">
-    <p class="eyebrow">Content</p>
-    <h2>New Blog Post</h2>
-
-    <form action="{{ url_for('admin_add_blog') }}" method="POST" class="admin-card">
-        <div class="admin-form-grid">
-            <div class="form-group" style="grid-column: 1 / -1;">
-                <label>Post Title</label>
-                <input type="text" name="title" placeholder="e.g. How to Choose a Gaming Laptop" required>
-            </div>
-
-            <div class="form-group" style="grid-column: 1 / -1;">
-                <label>Cover Image URL</label>
-                <input type="url" name="cover_image" placeholder="https://example.com/cover.jpg">
-            </div>
-
-            <div class="form-group" style="grid-column: 1 / -1;">
-                <label>Content</label>
-                <textarea name="content" rows="6" placeholder="Write your article here… Markdown supported." required></textarea>
-            </div>
-        </div>
-
-        <div class="admin-form-actions">
-            <button type="submit" class="btn btn-primary">🚀 Publish Post</button>
-        </div>
-    </form>
-</section>
-
 {% endblock %}

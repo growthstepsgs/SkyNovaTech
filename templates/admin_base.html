@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section" style="padding-bottom: 0;">
+    <nav class="admin-subnav" aria-label="Admin sections">
+        <a href="{{ url_for('admin_dashboard') }}" class="{{ 'active' if request.path == '/admin' }}">Overview</a>
+        <a href="{{ url_for('admin_products') }}" class="{{ 'active' if request.path.startswith('/admin/products') }}">Products</a>
+        <a href="{{ url_for('admin_blogs') }}" class="{{ 'active' if request.path.startswith('/admin/blogs') }}">Blog posts</a>
+        <a href="{{ url_for('admin_community') }}" class="{{ 'active' if request.path.startswith('/admin/community') }}">Community</a>
+        <a href="{{ url_for('admin_enquiries') }}" class="{{ 'active' if request.path.startswith('/admin/enquiries') }}">Enquiries</a>
+    </nav>
+</section>
+
+{% block admin_content %}{% endblock %}
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "admin_base.html" %}
+{% block title %}Enquiries — Admin — Sky Nova Tech{% endblock %}
+
+{% block admin_content %}
+<section class="section">
+    <h2>Enquiries &amp; orders</h2>
+
+    <div class="filter-tabs">
+        <a href="{{ url_for('admin_enquiries') }}" class="{{ 'active' if status == 'all' }}">All</a>
+        <a href="{{ url_for('admin_enquiries', status='new') }}" class="{{ 'active' if status == 'new' }}">New</a>
+        <a href="{{ url_for('admin_enquiries', status='contacted') }}" class="{{ 'active' if status == 'contacted' }}">Contacted</a>
+        <a href="{{ url_for('admin_enquiries', status='closed') }}" class="{{ 'active' if status == 'closed' }}">Closed</a>
+    </div>
+
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Date</th><th>Type</th><th>Customer</th><th>Contact</th>
+                    <th>Message</th><th>Status</th><th>Note</th><th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in enquiries %}
+                <tr>
+                    <td class="mono">{{ e.created_at[:10] if e.created_at else '—' }}</td>
+                    <td><span class="badge type-{{ e.type }}">{{ e.type }}</span></td>
+                    <td><strong>{{ e.name or '—' }}</strong></td>
+                    <td class="mono-small">{{ e.email or '—' }}<br>{{ e.phone or '—' }}</td>
+                    <td><small class="muted">{{ e.message or '—' }}</small></td>
+                    <td>
+                        <form action="{{ url_for('admin_respond_enquiry', enquiry_id=e.id) }}" method="POST">
+                            <select name="status" class="status-select" onchange="this.form.submit()">
+                                <option value="new" {% if e.status=='new' %}selected{% endif %}>New</option>
+                                <option value="contacted" {% if e.status=='contacted' %}selected{% endif %}>Contacted</option>
+                                <option value="closed" {% if e.status=='closed' %}selected{% endif %}>Closed</option>
+                            </select>
+                        </form>
+                    </td>
+                    <td>
+                        <form action="{{ url_for('admin_respond_enquiry', enquiry_id=e.id) }}" method="POST" class="note-form">
+                            <input type="text" name="admin_note" value="{{ e.admin_note or '' }}" placeholder="Add note, press Enter">
+                        </form>
+                    </td>
+                    <td>
+                        <form action="{{ url_for('admin_delete_enquiry', enquiry_id=e.id) }}" method="POST"
+                              onsubmit="return confirm('Delete this enquiry?');">
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="empty-cell">No enquiries here.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

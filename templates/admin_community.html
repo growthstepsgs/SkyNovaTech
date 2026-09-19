@@ -1,0 +1,47 @@
+{% extends "admin_base.html" %}
+{% block title %}Community — Admin — Sky Nova Tech{% endblock %}
+
+{% block admin_content %}
+<section class="section">
+    <h2>Community posts</h2>
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr><th>Date</th><th>Author</th><th>Post</th><th style="width:180px">Actions</th></tr>
+            </thead>
+            <tbody>
+                {% for p in posts %}
+                <tr>
+                    <td class="mono">{{ p.created_at[:10] if p.created_at else '—' }}</td>
+                    <td>{{ p.profiles.full_name if p.profiles else '—' }}</td>
+                    <td>
+                        <details>
+                            <summary><strong>{{ p.title }}</strong></summary>
+                            <form action="{{ url_for('admin_edit_community_post', post_id=p.id) }}" method="POST" class="inline-edit">
+                                <div class="form-group">
+                                    <label>Title</label>
+                                    <input type="text" name="title" value="{{ p.title }}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Content</label>
+                                    <textarea name="content" rows="4" required>{{ p.content }}</textarea>
+                                </div>
+                                <button type="submit" class="btn btn-sm btn-primary">Save changes</button>
+                            </form>
+                        </details>
+                    </td>
+                    <td class="row-actions">
+                        <form action="{{ url_for('admin_delete_community_post', post_id=p.id) }}" method="POST" style="display:inline"
+                              onsubmit="return confirm('Delete this post?');">
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="empty-cell">No community posts yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
