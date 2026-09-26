@@ -5,8 +5,10 @@ Hosting: Vercel
 """
 
 import os
+import uuid
 from functools import wraps
 from datetime import datetime
+from urllib.parse import quote
 
 from flask import (
     Flask, render_template, request, redirect,
@@ -29,6 +31,45 @@ SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")  # server-only, by
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 # Admin client (service role) - admin operations only
 supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+# ---------------------------------------------------------------------------
+# Site contact configuration (edit via .env — never hard-code contact
+# details elsewhere in the codebase, always read them from here)
+# ---------------------------------------------------------------------------
+# WHATSAPP_NUMBER must be digits only, with country code, no "+", spaces or dashes
+# e.g. 918056850501 for +91 80568 50501
+WHATSAPP_NUMBER = os.environ.get("WHATSAPP_NUMBER", "917825050508")
+CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "info.skynovatech@gmail.com")
+CONTACT_PHONE = os.environ.get("CONTACT_PHONE", "+91 78250 50508")
+CONTACT_ADDRESS = os.environ.get("CONTACT_ADDRESS", "Shiva Nanda Colony Road, Tata bath, Coimbatore, India")
+WHATSAPP_DEFAULT_MESSAGE = os.environ.get(
+    "WHATSAPP_DEFAULT_MESSAGE", "Hi Sky Nova Tech, I'd like to know more about your products."
+)
+
+
+def whatsapp_link(message=None):
+    """Builds an official wa.me deep link for the configured WhatsApp number."""
+    link = f"https://wa.me/{WHATSAPP_NUMBER}"
+    text = message if message is not None else WHATSAPP_DEFAULT_MESSAGE
+    if text:
+        link += f"?text={quote(text)}"
+    return link
+
+
+@app.context_processor
+def inject_site_config():
+    """Makes contact details available to every template without
+    hard-coding them in each file."""
+    return {
+        "site_config": {
+            "whatsapp_number": WHATSAPP_NUMBER,
+            "whatsapp_link": whatsapp_link(),
+            "contact_email": CONTACT_EMAIL,
+            "contact_phone": CONTACT_PHONE,
+            "contact_phone_tel": CONTACT_PHONE.replace(" ", "") if CONTACT_PHONE else "",
+            "contact_address": CONTACT_ADDRESS,
+        }
+    }
 
 # Image uploads go to Supabase Storage (Vercel's disk is read-only)
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
@@ -122,12 +163,70 @@ def about():
 @app.route("/ecommerce")
 def ecommerce():
     search = request.args.get("q", "").strip()
+    selected_categories = [c for c in request.args.getlist("category") if c.strip()]
+    sort = request.args.get("sort", "").strip()
+
+    # Validate numeric price inputs; silently ignore anything malformed
+    # rather than erroring out the whole listing page.
+    raw_min_price = request.args.get("min_price", "").strip()
+    raw_max_price = request.args.get("max_price", "").strip()
+    min_price = None
+    max_price = None
+    try:
+        if raw_min_price:
+            min_price = float(raw_min_price)
+    except ValueError:
+        raw_min_price = ""
+    try:
+        if raw_max_price:
+            max_price = float(raw_max_price)
+    except ValueError:
+        raw_max_price = ""
+
+    # Full list of categories for the filter sidebar (independent of the
+    # currently-applied filters, so options never disappear on the user).
+    try:
+        category_rows = (
+            supabase.table("products").select("category")
+            .eq("is_active", True).execute()
+        )
+        categories = sorted({r["category"] for r in category_rows.data if r.get("category")})
+    except Exception:
+        categories = []
+
     query = supabase.table("products").select("*").eq("is_active", True)
     if search:
         query = query.ilike("name", f"%{search}%")
+    if selected_categories:
+        query = query.in_("category", selected_categories)
+    if min_price is not None:
+        query = query.gte("price", min_price)
+    if max_price is not None:
+        query = query.lte("price", max_price)
+
+    if sort == "price_asc":
+        query = query.order("price", desc=False)
+    elif sort == "price_desc":
+        query = query.order("price", desc=True)
+    elif sort == "name_asc":
+        query = query.order("name", desc=False)
+    else:
+        sort = ""
+        query = query.order("created_at", desc=True)
+
     products = query.execute()
-    return render_template("ecommerce.html", products=products.data,
-                           query=search, user=session.get("user_name"))
+
+    return render_template(
+        "ecommerce.html",
+        products=products.data,
+        query=search,
+        categories=categories,
+        selected_categories=selected_categories,
+        min_price=raw_min_price,
+        max_price=raw_max_price,
+        sort=sort,
+        user=session.get("user_name"),
+    )
 
 
 @app.route("/product/<product_id>")
@@ -153,7 +252,7 @@ def blog_detail(post_id):
 @app.route("/community")
 @login_required
 def community():
-    posts = (supabase_admin.table("community_posts").select("*, profiles(full_name)")
+    posts = (supabase.table("community_posts").select("*, profiles(full_name)")
              .order("created_at", desc=True).execute())
     return render_template("community.html", posts=posts.data, user=session.get("user_name"))
 
@@ -161,7 +260,7 @@ def community():
 @app.route("/community/new", methods=["POST"])
 @login_required
 def community_new():
-    supabase_admin.table("community_posts").insert({
+    supabase.table("community_posts").insert({
         "title": request.form.get("title"),
         "content": request.form.get("content"),
         "user_id": session["user_id"],
@@ -179,43 +278,26 @@ def signup():
     if request.method == "GET":
         return render_template("signup.html")
 
-    full_name = (request.form.get("full_name") or "").strip()
-    email = (request.form.get("email") or "").strip().lower()
-    password = request.form.get("password") or ""
-    phone = (request.form.get("phone") or "").strip()
-
-    if len(password) < 6:
-        flash("Password must be at least 6 characters.", "danger")
-        return render_template("signup.html")
+    full_name = request.form.get("full_name")
+    email = request.form.get("email")
+    password = request.form.get("password")
+    phone = request.form.get("phone")
 
     try:
-        # Admin API: creates an already-confirmed user, so no confirmation
-        # email is needed and Supabase's email rate limit can't block signup.
-        result = supabase_admin.auth.admin.create_user({
-            "email": email,
-            "password": password,
-            "email_confirm": True,
-            "user_metadata": {"full_name": full_name},
-        })
-        new_user = result.user
-
-        # A DB trigger may already have created the profile row, so upsert.
-        supabase_admin.table("profiles").upsert({
-            "id": new_user.id,
-            "full_name": full_name,
-            "email": email,
-            "phone": phone,
-            "role": "customer",
-        }).execute()
-
-        flash("Account created! Please log in.", "success")
-        return redirect(url_for("login"))
+        auth_response = supabase.auth.sign_up({"email": email, "password": password})
+        new_user = auth_response.user
+        if new_user:
+            supabase_admin.table("profiles").insert({
+                "id": new_user.id,
+                "full_name": full_name,
+                "email": email,
+                "phone": phone,
+                "role": "customer",
+            }).execute()
+            flash("Account created! Please log in.", "success")
+            return redirect(url_for("login"))
     except Exception as e:
-        msg = str(e)
-        if "already" in msg.lower() or "registered" in msg.lower():
-            flash("An account with this email already exists. Try logging in.", "danger")
-        else:
-            flash(f"Signup failed: {msg}", "danger")
+        flash(f"Signup failed: {str(e)}", "danger")
 
     return render_template("signup.html")
 
@@ -225,44 +307,24 @@ def login():
     if request.method == "GET":
         return render_template("login.html")
 
-    email = (request.form.get("email") or "").strip().lower()
-    password = request.form.get("password") or ""
+    email = request.form.get("email")
+    password = request.form.get("password")
 
     try:
-        # Fresh client per login. Signing in on the shared global client would
-        # leak one user's session into every other request.
-        auth_client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
-        auth_response = auth_client.auth.sign_in_with_password({
-            "email": email,
-            "password": password,
-        })
+        auth_response = supabase.auth.sign_in_with_password({"email": email, "password": password})
         user = auth_response.user
-
-        # Server-side profile lookup with the service key
-        result = supabase_admin.table("profiles").select("*").eq("id", user.id).execute()
-        if result.data:
-            profile = result.data[0]
-        else:
-            profile = {"full_name": email.split("@")[0], "role": "customer"}
-            supabase_admin.table("profiles").upsert({
-                "id": user.id, "email": email,
-                "full_name": profile["full_name"], "role": "customer",
-            }).execute()
+        profile = supabase.table("profiles").select("*").eq("id", user.id).single().execute()
 
         session["user_id"] = user.id
-        session["user_name"] = profile.get("full_name")
-        session["is_admin"] = profile.get("role") == "admin"
+        session["user_name"] = profile.data.get("full_name")
+        session["is_admin"] = profile.data.get("role") == "admin"
 
         flash("Logged in successfully!", "success")
         if session["is_admin"]:
             return redirect(url_for("admin_dashboard"))
         return redirect(url_for("index"))
-
-    except Exception as e:
-        if "not confirmed" in str(e).lower():
-            flash("Please confirm your email first, or ask the admin to confirm it.", "warning")
-        else:
-            flash("Invalid email or password.", "danger")
+    except Exception:
+        flash("Invalid email or password.", "danger")
         return render_template("login.html")
 
 
@@ -532,6 +594,74 @@ def admin_delete_enquiry(enquiry_id):
 def api_products():
     products = supabase.table("products").select("*").eq("is_active", True).execute()
     return jsonify(products.data)
+
+
+# ---- Contact / lead click tracking ----------------------------------------
+TRACKABLE_ACTIONS = {
+    "whatsapp_click",
+    "email_click",
+    "phone_click",
+    "contact_button_click",
+    "contact_form_submit",
+}
+
+
+@app.route("/api/track", methods=["POST"])
+def api_track():
+    """Records a contact/lead interaction (button click, not a page view).
+    Fails silently — tracking must never break the site or block the
+    action the visitor was actually trying to take (opening WhatsApp,
+    their email client, etc.)."""
+    data = request.get_json(silent=True) or {}
+    action_type = str(data.get("action_type", "")).strip()
+    if action_type not in TRACKABLE_ACTIONS:
+        return jsonify({"ok": False, "error": "invalid action_type"}), 400
+
+    page = str(data.get("page") or request.referrer or "")[:255]
+
+    # Anonymous, session-scoped identifier only — no personal data collected.
+    anon_id = session.get("track_sid")
+    if not anon_id:
+        anon_id = uuid.uuid4().hex
+        session["track_sid"] = anon_id
+
+    try:
+        supabase_admin.table("interactions").insert({
+            "action_type": action_type,
+            "page": page,
+            "session_id": anon_id,
+        }).execute()
+    except Exception:
+        pass
+    return jsonify({"ok": True})
+
+
+# ---- Analytics (admin only) ------------------------------------------------
+@app.route("/admin/analytics")
+@admin_required
+def admin_analytics():
+    try:
+        interactions = (
+            supabase_admin.table("interactions").select("*")
+            .order("created_at", desc=True).execute()
+        )
+        data = interactions.data
+    except Exception:
+        data = []
+
+    counts = {action: 0 for action in TRACKABLE_ACTIONS}
+    for row in data:
+        action_type = row.get("action_type")
+        if action_type in counts:
+            counts[action_type] += 1
+
+    return render_template(
+        "admin_analytics.html",
+        counts=counts,
+        total_interactions=len(data),
+        recent_interactions=data[:25],
+        user=session.get("user_name"),
+    )
 
 
 if __name__ == "__main__":

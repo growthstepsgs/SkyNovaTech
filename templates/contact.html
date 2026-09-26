@@ -26,17 +26,36 @@
             <div class="info-card">
                 <div class="info-icon">📍</div>
                 <h3>Visit us</h3>
-                <p>Shiva Nanda Colony Road,<br>Tata bath,<br>Coimbatore, India</p>
+                <p>{{ site_config.contact_address }}</p>
             </div>
             <div class="info-card">
                 <div class="info-icon">📧</div>
                 <h3>Email</h3>
-                <p>info.skynovatech@gmail.com</p>
+                <p>{{ site_config.contact_email }}</p>
             </div>
             <div class="info-card">
                 <div class="info-icon">📞</div>
                 <h3>Phone</h3>
-                <p>+91 80568 50501<br>Mon–Sat, 9am – 7pm</p>
+                <p>{{ site_config.contact_phone }}<br>Mon–Sat, 9am – 7pm</p>
+            </div>
+
+            <!-- Quick-contact CTAs -->
+            <div class="contact-cta-row">
+                <a href="mailto:{{ site_config.contact_email }}"
+                   class="btn btn-primary"
+                   data-track-action="email_click" data-track-page="contact">
+                    📧 Email us
+                </a>
+                <a href="{{ site_config.whatsapp_link }}" target="_blank" rel="noopener"
+                   class="btn btn-primary"
+                   data-track-action="whatsapp_click" data-track-page="contact">
+                    💬 WhatsApp us
+                </a>
+                <a href="tel:{{ site_config.contact_phone_tel }}"
+                   class="btn btn-ghost"
+                   data-track-action="phone_click" data-track-page="contact">
+                    📞 Call us
+                </a>
             </div>
         </div>
 
@@ -62,7 +81,8 @@
                     </div>
                 </div>
                 <div class="admin-form-actions">
-                    <button type="submit" class="btn btn-primary">📨 Send Message</button>
+                    <button type="submit" class="btn btn-primary"
+                        data-track-action="contact_form_submit" data-track-page="contact">📨 Send Message</button>
                 </div>
             </form>
         </div>

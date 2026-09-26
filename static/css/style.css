@@ -58,11 +58,11 @@
 }
 
 [data-theme="dark"] {
-    --bg: #070d2b;
-    --surface: #0e1740;
+    --bg: #0c1440;
+    --surface: #18235f;
     --ink: #f4f7ff;
-    --ink-soft: #9aa6ce;
-    --line: rgba(255, 255, 255, 0.1);
+    --ink-soft: #aab2d9;
+    --line: rgba(255, 255, 255, 0.14);
 
     --accent: #4cc46a;
     --accent-ink: #06210f;
@@ -911,6 +911,64 @@ details summary { cursor: pointer; }
 .results-count { font-size: 0.88rem; color: var(--ink-soft); margin: 0.5rem 0 0; }
 .results-count strong { color: var(--ink); font-weight: 600; }
 
+/* ---------- Shop filters ---------- */
+.shop-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+.shop-filters {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    position: sticky;
+    top: 1rem;
+}
+.filter-group { margin-bottom: 1.25rem; }
+.filter-group:last-of-type { margin-bottom: 1rem; }
+.filter-group h4 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    margin: 0 0 0.6rem;
+}
+.filter-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    color: var(--ink);
+    padding: 0.3rem 0;
+    cursor: pointer;
+}
+.filter-checkbox input { accent-color: var(--accent); width: 16px; height: 16px; flex-shrink: 0; }
+.price-range-inputs { display: flex; align-items: center; gap: 0.5rem; }
+.price-range-inputs input {
+    width: 100%;
+    min-width: 0;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 0.85rem;
+}
+.filter-group select {
+    width: 100%;
+    padding: 0.55rem 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 0.85rem;
+}
+.filter-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+.filter-actions .btn { width: 100%; }
+.filter-toggle-btn { display: none; margin-bottom: 1rem; }
+
 .shop-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
@@ -1119,6 +1177,34 @@ details summary { cursor: pointer; }
 }
 .map-wrap:hover iframe { filter: grayscale(0) contrast(1); }
 
+.contact-cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+.contact-cta-row .btn { flex: 1 1 150px; }
+
+/* ---------- Floating WhatsApp button ---------- */
+.wa-float {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #25d366;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    transition: transform 0.15s ease;
+    color: #fff;
+}
+.wa-float:hover { transform: scale(1.08); }
+.wa-float svg { width: 30px; height: 30px; }
+
 /* ---------- Footer ---------- */
 .footer { border-top: 1px solid var(--line); margin-top: 3rem; background: var(--surface); }
 .footer-inner {
@@ -1162,7 +1248,13 @@ details summary { cursor: pointer; }
     }
     .enquiry-grid { grid-template-columns: 1fr; }
     .enquiry-actions { flex-direction: column; }
+
+    .shop-layout { grid-template-columns: 1fr; }
+    .filter-toggle-btn { display: inline-flex; }
+    .shop-filters { display: none; position: static; }
+    .shop-filters.open { display: block; margin-bottom: 1rem; }
 }
+.footer-logo { height: 32px; width: auto; }
 
 @media (max-width: 720px) {
     .nav-toggle {
@@ -1201,6 +1293,10 @@ details summary { cursor: pointer; }
     .shop-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
     .search-box { max-width: 100%; }
     .map-wrap { height: 280px; }
+    .wa-float { width: 50px; height: 50px; bottom: 1rem; right: 1rem; }
+    .wa-float svg { width: 26px; height: 26px; }
+    .contact-cta-row { flex-direction: column; }
+    .contact-cta-row .btn { flex: 1 1 auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {

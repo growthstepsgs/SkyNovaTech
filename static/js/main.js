@@ -57,3 +57,32 @@ if (themeToggle) {
         setTheme(current === "dark-blue" ? "dark" : "dark-blue");
     });
 }
+
+// =========================================================
+// CONTACT / LEAD CLICK TRACKING
+// Fires a lightweight, non-blocking beacon so buttons (WhatsApp,
+// mailto, tel, contact form) always complete their normal action
+// even if tracking fails or the browser blocks the request.
+// =========================================================
+document.querySelectorAll("[data-track-action]").forEach((el) => {
+    el.addEventListener("click", () => {
+        const payload = JSON.stringify({
+            action_type: el.getAttribute("data-track-action"),
+            page: el.getAttribute("data-track-page") || window.location.pathname,
+        });
+        try {
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon("/api/track", new Blob([payload], { type: "application/json" }));
+            } else {
+                fetch("/api/track", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: payload,
+                    keepalive: true,
+                }).catch(() => {});
+            }
+        } catch (e) {
+            /* tracking must never block the visitor's action */
+        }
+    });
+});

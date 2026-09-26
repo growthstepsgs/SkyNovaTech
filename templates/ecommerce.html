@@ -8,7 +8,7 @@
     <p class="eyebrow">Store</p>
     <h1>Our Products</h1>
 
-    <form method="GET" action="{{ url_for('ecommerce') }}" class="shop-search">
+    <form method="GET" action="{{ url_for('ecommerce') }}" id="shopForm" class="shop-search">
         <div class="search-box">
             <input
                 type="text"
@@ -19,9 +19,6 @@
             >
             <button type="submit" class="search-btn" aria-label="Search">🔍</button>
         </div>
-        {% if query %}
-        <a href="{{ url_for('ecommerce') }}" class="btn btn-ghost btn-sm">✕ Clear search</a>
-        {% endif %}
     </form>
 
     <p class="results-count">
@@ -29,47 +26,106 @@
             Showing <strong>{{ products|length }}</strong> product{% if products|length != 1 %}s{% endif %}
             {% if query %} for "<strong>{{ query }}</strong>"{% endif %}
         {% else %}
-            {% if query %}No products match "<strong>{{ query }}</strong>"{% else %}No products available yet.{% endif %}
+            {% if query or selected_categories or min_price or max_price %}No products match your filters{% else %}No products available yet.{% endif %}
         {% endif %}
     </p>
 </section>
 
-<!-- ===== PRODUCT GRID ===== -->
-<section class="section" style="padding-top: 0;">
-    {% if products %}
-    <div class="shop-grid">
-        {% for p in products %}
-        <div class="shop-card">
-            <div class="shop-img">
-                {% if p.image_url %}
-                    <img src="{{ p.image_url }}"
-                         alt="{{ p.name }}"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <span class="img-placeholder" style="display:none;">No Image</span>
-                {% else %}
-                    <span class="img-placeholder">No Image</span>
-                {% endif %}
-            </div>
-            <div class="shop-body">
-                {% if p.category %}
-                <span class="shop-tag">{{ p.category }}</span>
-                {% endif %}
-                <h3>{{ p.name }}</h3>
-                <p class="shop-price">₹{{ "%.0f"|format(p.price) }}</p>
-                <a href="{{ url_for('product_detail', product_id=p.id) }}" class="btn btn-sm btn-primary">View Details</a>
+<!-- ===== FILTERS + PRODUCT GRID ===== -->
+<section class="section shop-layout" style="padding-top: 0;">
+
+    <button type="button" id="filterToggle" class="btn btn-ghost btn-sm filter-toggle-btn">☰ Filters</button>
+
+    <aside class="shop-filters" id="shopFilters">
+        <div class="filter-group">
+            <h4>Categories</h4>
+            {% if categories %}
+                {% for c in categories %}
+                <label class="filter-checkbox">
+                    <input type="checkbox" name="category" value="{{ c }}" form="shopForm"
+                           {% if c in selected_categories %}checked{% endif %}
+                           onchange="document.getElementById('shopForm').submit()">
+                    <span>{{ c }}</span>
+                </label>
+                {% endfor %}
+            {% else %}
+                <p class="muted">No categories yet.</p>
+            {% endif %}
+        </div>
+
+        <div class="filter-group">
+            <h4>Price Range (₹)</h4>
+            <div class="price-range-inputs">
+                <input type="number" name="min_price" form="shopForm" placeholder="Min" min="0" value="{{ min_price }}">
+                <span>–</span>
+                <input type="number" name="max_price" form="shopForm" placeholder="Max" min="0" value="{{ max_price }}">
             </div>
         </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="empty-shop">
-        <p style="font-size: 1.2rem; margin-bottom: 0.5rem;">🛒</p>
-        <p>No products found.</p>
-        {% if query %}
-        <a href="{{ url_for('ecommerce') }}" class="link-arrow">View all products</a>
+
+        <div class="filter-group">
+            <h4>Sort by</h4>
+            <select name="sort" form="shopForm" onchange="document.getElementById('shopForm').submit()">
+                <option value="" {% if not sort %}selected{% endif %}>Newest</option>
+                <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+                <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+                <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Name: A–Z</option>
+            </select>
+        </div>
+
+        <div class="filter-actions">
+            <button type="submit" form="shopForm" class="btn btn-primary btn-sm">Apply Filters</button>
+            <a href="{{ url_for('ecommerce') }}" class="btn btn-ghost btn-sm">✕ Clear All Filters</a>
+        </div>
+    </aside>
+
+    <div class="shop-main">
+        {% if products %}
+        <div class="shop-grid">
+            {% for p in products %}
+            <div class="shop-card">
+                <div class="shop-img">
+                    {% if p.image_url %}
+                        <img src="{{ p.image_url }}"
+                             alt="{{ p.name }}"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <span class="img-placeholder" style="display:none;">No Image</span>
+                    {% else %}
+                        <span class="img-placeholder">No Image</span>
+                    {% endif %}
+                </div>
+                <div class="shop-body">
+                    {% if p.category %}
+                    <span class="shop-tag">{{ p.category }}</span>
+                    {% endif %}
+                    <h3>{{ p.name }}</h3>
+                    <p class="shop-price">₹{{ "%.0f"|format(p.price) }}</p>
+                    <a href="{{ url_for('product_detail', product_id=p.id) }}" class="btn btn-sm btn-primary">View Details</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-shop">
+            <p style="font-size: 1.2rem; margin-bottom: 0.5rem;">🛒</p>
+            <p>No products found.</p>
+            {% if query or selected_categories or min_price or max_price %}
+            <a href="{{ url_for('ecommerce') }}" class="link-arrow">Clear filters and view all products</a>
+            {% endif %}
+        </div>
         {% endif %}
     </div>
-    {% endif %}
 </section>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const filterToggle = document.getElementById("filterToggle");
+    const shopFilters = document.getElementById("shopFilters");
+    if (filterToggle && shopFilters) {
+        filterToggle.addEventListener("click", () => {
+            shopFilters.classList.toggle("open");
+        });
+    }
+</script>
 {% endblock %}
